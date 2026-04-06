@@ -134,7 +134,9 @@ export const adminTranslations = {
     caution_amount: "بڕی بارمتە (دۆلار)",
     caution: "ئاگاداری",
     override_price: "دەستکاری نرخ",
-    price_updated: "نرخەکە بە سەرکەوتوویی نوێکرایەوە"
+    price_updated: "نرخەکە بە سەرکەوتوویی نوێکرایەوە",
+    no_products: "هیچ کاڵایەک نەدۆزرایەوە.",
+    no_reports: "هیچ ڕاپۆرتێک نەدۆزرایەوە."
   }
 }
 

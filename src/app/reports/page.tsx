@@ -11,12 +11,12 @@ import { Report } from "@/types"
 export default function ReportsPage() {
   const [reports, setReports] = useState<Report[]>([])
   const [search, setSearch] = useState("")
-  const [loading, setLoading] = useState(true)
+  const [isLoading, setIsLoading] = useState(true)
   const t = adminTranslations.ku
 
   const fetchReports = useCallback(async () => {
-    setLoading(true)
     try {
+      setIsLoading(true)
       const result = await getReports()
       if (result.success && result.data) {
         setReports(result.data)
@@ -24,10 +24,9 @@ export default function ReportsPage() {
         console.error("Fetch reports error:", result.error);
       }
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : "Unknown error"
-      console.error("Reports fetch execution error:", message);
+      console.error("Reports fetch execution error");
     } finally {
-      setLoading(false)
+      setIsLoading(false)
     }
   }, [])
 
@@ -80,6 +79,10 @@ export default function ReportsPage() {
     (r.details || "").includes(search)
   )
 
+  const Skeleton = ({ className }: { className: string }) => (
+    <div className={`skeleton ${className}`}></div>
+  )
+
   return (
     <div className="space-y-4 flex flex-col h-full animate-in fade-in duration-500">
       <div className="flex items-center justify-between flex-shrink-0">
@@ -91,7 +94,7 @@ export default function ReportsPage() {
             onClick={() => fetchReports()}
             className="bg-white/5 text-slate-400 text-xs font-black h-9 px-3 rounded-lg flex items-center gap-2 hover:bg-white/10 transition-all border border-white/10 uppercase"
           >
-            {loading ? <Clock className="animate-spin" size={14} /> : <AlertCircle size={14} />}
+            {isLoading ? <Clock className="animate-spin" size={14} /> : <AlertCircle size={14} />}
             {t.refresh}
           </button>
         </div>
@@ -112,9 +115,13 @@ export default function ReportsPage() {
         </div>
 
         <div className="flex-1 overflow-auto">
-          {filteredReports.length === 0 ? (
-            <div className="p-12 text-center text-slate-500 font-bold uppercase tracking-widest">
-              {loading ? "Chargining..." : "هیچ ڕاپۆرتێک نییە"}
+          {isLoading ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-4">
+              {[1,2,3,4,5,6].map(i => <Skeleton key={i} className="h-48 w-full rounded-xl" />)}
+            </div>
+          ) : filteredReports.length === 0 ? (
+            <div className="p-12 text-center text-slate-500 font-bold uppercase tracking-widest bg-white/5 border border-white/5 m-4 rounded-2xl">
+              {t.no_reports || "هیچ ڕاپۆرتێک نییە"}
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-4">

@@ -12,7 +12,8 @@ import { Product } from "@/types"
 export default function ProductsPage() {
   const [products, setProducts] = useState<Product[]>([])
   const [showModal, setShowModal] = useState(false)
-  const [isLoading, setIsLoading] = useState(false)
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [isLoading, setIsLoading] = useState(true)
   
   const t = adminTranslations.ku;
   
@@ -37,6 +38,7 @@ export default function ProductsPage() {
 
   const fetchProductsData = useCallback(async () => {
     try {
+      setIsLoading(true)
       const result = await getProducts()
       if (result.success && result.data) {
         setProducts(result.data)
@@ -44,8 +46,9 @@ export default function ProductsPage() {
         console.error("Products fetch error:", result.error)
       }
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : "Unknown error"
-      console.error("Products fetch execution error:", message)
+      console.error("Products fetch execution error")
+    } finally {
+      setIsLoading(false)
     }
   }, [])
 
@@ -94,9 +97,9 @@ export default function ProductsPage() {
 
   const handleDeleteProduct = async (id: string) => {
     if (!confirm(t.confirm_delete)) return
-    setIsLoading(true)
+    setIsSubmitting(true)
     const result = await deleteProduct(id)
-    setIsLoading(false)
+    setIsSubmitting(false)
     if (!result.success) alert("Error: " + result.error)
     else fetchProductsData()
   }
@@ -131,13 +134,17 @@ export default function ProductsPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    setIsLoading(true)
+    setIsSubmitting(true)
     const payload = { ...formData, image_urls: formData.image_urls.filter(url => url.trim() !== "") }
     const result = await saveProduct(payload as unknown as Product, editingId)
-    setIsLoading(false)
+    setIsSubmitting(false)
     if (!result.success) alert("Error: " + result.error)
     else { setShowModal(false); fetchProductsData(); resetForm(); }
   }
+
+  const Skeleton = ({ className }: { className: string }) => (
+    <div className={`skeleton ${className}`}></div>
+  )
 
   return (
     <div className="space-y-4 animate-in fade-in duration-500 text-right">
@@ -155,7 +162,13 @@ export default function ProductsPage() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mt-6">
-        {products.map((product) => (
+        {isLoading ? (
+          [1,2,3,4].map(i => <Skeleton key={i} className="h-64 w-full rounded-xl" />)
+        ) : products.length === 0 ? (
+          <div className="col-span-full py-20 text-center text-slate-500 font-bold uppercase tracking-widest bg-white/5 border border-white/5 rounded-2xl">
+            {t.no_products}
+          </div>
+        ) : products.map((product) => (
           <div key={product.id} className="glass-panel group overflow-hidden flex flex-col border border-white/5 hover:border-[#FF7A00]/30 transition-all duration-300">
             <div className="aspect-video relative overflow-hidden bg-black/50">
               <Image 
@@ -265,8 +278,8 @@ export default function ProductsPage() {
               </div>
 
               <div className="flex gap-4 pt-8 border-t border-white/5">
-                <button type="submit" disabled={isLoading} className="flex-1 bg-white text-black py-4 rounded-xl font-black uppercase tracking-widest text-sm hover:bg-slate-200 transition-transform active:scale-95 disabled:opacity-50">
-                  {isLoading ? '...' : (editingId ? t.save_changes : 'بڵاوکردنەوە')}
+                <button type="submit" disabled={isSubmitting} className="flex-1 bg-white text-black py-4 rounded-xl font-black uppercase tracking-widest text-sm hover:bg-slate-200 transition-transform active:scale-95 disabled:opacity-50">
+                  {isSubmitting ? '...' : (editingId ? t.save_changes : 'بڵاوکردنەوە')}
                 </button>
                 <button type="button" onClick={() => { setShowModal(false); resetForm(); }} className="px-8 bg-white/5 border border-white/10 rounded-xl font-black text-slate-400 hover:text-white transition-colors uppercase text-sm">{t.cancel}</button>
               </div>

@@ -13,10 +13,12 @@ const HUB_ORIGIN = { lat: 36.1912, lng: 44.0091 } // Erbil Central Hub
 export default function OrdersPage() {
   const [orders, setOrders] = useState<Order[]>([])
   const [search, setSearch] = useState("")
+  const [isLoading, setIsLoading] = useState(true)
   const t = adminTranslations.ku
 
   const fetchOrders = useCallback(async () => {
     try {
+      setIsLoading(true)
       const result = await getOrders()
       if (result.success && result.data) {
         setOrders(result.data)
@@ -24,8 +26,9 @@ export default function OrdersPage() {
         console.error("Fetch orders error:", result.error);
       }
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : "Unknown error"
-      console.error("Orders fetch execution error:", message);
+      console.error("Orders fetch execution error");
+    } finally {
+      setIsLoading(false)
     }
   }, [])
 
@@ -66,6 +69,10 @@ export default function OrdersPage() {
       alert("Error: " + message)
     }
   }
+
+  const Skeleton = ({ className }: { className: string }) => (
+    <div className={`skeleton ${className}`}></div>
+  )
 
   return (
     <div className="space-y-4 flex flex-col h-full animate-in fade-in duration-500">
@@ -111,7 +118,16 @@ export default function OrdersPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-white/5 text-xs">
-                {orders.length === 0 ? (
+                {isLoading ? (
+                  [1,2,3,4,5].map(i => (
+                    <tr key={i}>
+                      <td className="px-6 py-4"><Skeleton className="h-10 w-full" /></td>
+                      <td className="px-6 py-4"><Skeleton className="h-10 w-full" /></td>
+                      <td className="px-6 py-4"><Skeleton className="h-10 w-full" /></td>
+                      <td className="px-6 py-4"><Skeleton className="h-10 w-full" /></td>
+                    </tr>
+                  ))
+                ) : orders.length === 0 ? (
                   <tr>
                      <td colSpan={4} className="px-6 py-8 text-center text-slate-400">{t.no_orders}</td>
                   </tr>
@@ -120,7 +136,7 @@ export default function OrdersPage() {
                     (o.users?.phone || "").includes(search) || 
                     (o.users?.full_name || "").toLowerCase().includes(search.toLowerCase())
                   ).map((order) => (
-                  <tr key={order.id} className="hover:bg-white/5 transition-colors group">
+                    <tr key={order.id} className="hover:bg-white/5 transition-colors group">
                     <td className="px-6 py-4">
                       <p className="font-black text-[#FF7A00] truncate w-32 uppercase">{order.id.slice(0, 8)}</p>
                       <p className="text-[10px] text-slate-500 font-bold tracking-widest mt-0.5">${order.final_price}</p>
@@ -168,7 +184,9 @@ export default function OrdersPage() {
             </table>
 
             <div className="lg:hidden space-y-3">
-              {orders.length === 0 ? (
+              {isLoading ? (
+                [1,2,3].map(i => <Skeleton key={i} className="h-32 w-full rounded-xl" />)
+              ) : orders.length === 0 ? (
                 <div className="p-8 text-center text-slate-400">{t.no_orders}</div>
               ) : orders.filter(o => 
                     o.id.includes(search) || 

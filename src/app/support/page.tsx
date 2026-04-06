@@ -132,6 +132,10 @@ export default function SupportPage() {
     }
   }
 
+  const Skeleton = ({ className }: { className: string }) => (
+    <div className={`skeleton ${className}`}></div>
+  )
+
   return (
     <div className="flex -mt-2 lg:mt-0 h-[calc(100vh-145px)] lg:h-[calc(100vh-140px)] gap-3 lg:gap-6 antialiased overflow-hidden text-right">
       {/* Sidebar: List of Requests */}
@@ -142,11 +146,13 @@ export default function SupportPage() {
         </div>
         
         <div className="flex-1 overflow-y-auto">
-            {requests.length === 0 && !isLoading && (
+            {isLoading ? (
+                <div className="p-4 space-y-4">
+                    {[1,2,3,4,5].map(i => <Skeleton key={i} className="h-20 w-full rounded-xl" />)}
+                </div>
+            ) : requests.length === 0 ? (
                 <div className="p-8 text-center text-slate-500 text-xs font-bold uppercase tracking-widest opacity-30">هیچ داواکارییەک نییە</div>
-            )}
-            
-            {requests.map(req => (
+            ) : requests.map(req => (
                 <button
                     key={req.id}
                     onClick={() => setSelectedRequestId(req.id)}
