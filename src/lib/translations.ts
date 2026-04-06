@@ -131,7 +131,10 @@ export const adminTranslations = {
     max_bid: "بەرزترین نرخ",
     active_auto_bidders: "زیادکەرە خۆکارەکان",
     enter_amount: "بڕی زیادکردن بنووسە:",
-    caution_amount: "بڕی بارمتە (دۆلار)"
+    caution_amount: "بڕی بارمتە (دۆلار)",
+    caution: "ئاگاداری",
+    override_price: "دەستکاری نرخ",
+    price_updated: "نرخەکە بە سەرکەوتوویی نوێکرایەوە"
   }
 }
 

@@ -330,16 +330,19 @@ export default function AuctionsPage() {
                 <button onClick={() => handleEditAuction(auction)} className="flex-1 py-2 bg-white/5 text-slate-300 text-[10px] font-black rounded-lg uppercase border border-white/10">{t.edit}</button>
                 <button 
                   onClick={async () => {
-                    const amount = prompt(t.enter_amount, (auction.current_price + auction.min_bid_increment).toString())
-                    if (amount && parseFloat(amount) > auction.current_price) {
+                    const amount = prompt(`${t.override_price} (USD):`, (auction.current_price).toString())
+                    if (amount && parseFloat(amount) !== auction.current_price) {
                         const result = await updateAuctionPrice(auction.id, parseFloat(amount))
                         if (!result.success) alert("Error: " + result.error)
-                        else fetchAuctions()
+                        else {
+                          alert(t.price_updated)
+                          fetchAuctions()
+                        }
                     }
                   }}
-                  className="flex-1 py-2 bg-[#FF7A00]/10 text-[#FF7A00] text-[10px] font-black rounded-lg uppercase border border-[#FF7A00]/10"
+                  className={`flex-1 py-2 ${auction.current_price > 1000 ? 'bg-red-500/20 text-red-500 animate-pulse border-red-500/30' : 'bg-[#FF7A00]/10 text-[#FF7A00] border-[#FF7A00]/10'} text-[10px] font-black rounded-lg uppercase border`}
                 >
-                  {t.current_price}
+                  {auction.current_price > 1000 ? `⚠️ ${t.caution}` : t.override_price}
                 </button>
                 <button onClick={() => handleDeleteAuction(auction.id)} className="p-2 bg-red-500/10 text-red-500 rounded border border-red-500/10"><Trash2 size={14}/></button>
               </div>
@@ -388,6 +391,24 @@ export default function AuctionsPage() {
                     <td className="px-6 py-4"><CountdownCell endTime={auction.end_time} /></td>
                     <td className="px-6 py-4 text-right opacity-0 group-hover:opacity-100 transition-opacity">
                       <div className="flex justify-end gap-1.5">
+                        {auction.current_price > 1000 && <span className="bg-red-500/10 text-red-500 text-[8px] font-black px-1.5 py-1 rounded border border-red-500/20 animate-pulse self-center">⚠️ {t.caution}</span>}
+                        <button 
+                          onClick={async () => {
+                            const amount = prompt(`${t.override_price} (USD):`, (auction.current_price).toString())
+                            if (amount && parseFloat(amount) !== auction.current_price) {
+                                const result = await updateAuctionPrice(auction.id, parseFloat(amount))
+                                if (!result.success) alert("Error: " + result.error)
+                                else {
+                                  alert(t.price_updated)
+                                  fetchAuctions()
+                                }
+                            }
+                          }}
+                          className="p-1.5 hover:bg-white/10 rounded text-amber-500 hover:bg-amber-500/10 transition-colors" 
+                          title={t.override_price}
+                        >
+                          <Filter size={14}/>
+                        </button>
                         <button onClick={() => { setSelectedAuctionForBids(auction); fetchBids(auction.id); }} className="p-1.5 hover:bg-white/10 rounded text-[#FF7A00] hover:bg-[#FF7A00]/10 transition-colors" title={t.bid_history}><Search size={14}/></button>
                         <button onClick={() => handleEditAuction(auction)} className="p-1.5 hover:bg-white/10 rounded text-slate-400 hover:text-white transition-colors"><Plus size={14}/></button>
                         <button onClick={() => handleDeleteAuction(auction.id)} className="p-1.5 hover:bg-white/10 rounded text-red-500 hover:bg-red-500/10 transition-colors"><Trash2 size={14}/></button>
