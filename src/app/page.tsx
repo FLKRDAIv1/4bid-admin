@@ -21,11 +21,15 @@ export default function DashboardPage() {
   const [chartData, setChartData] = useState<ChartData[]>([])
   const [liveBids, setLiveBids] = useState<DashboardBid[]>([])
   const [pendingUsers, setPendingUsers] = useState<DashboardUser[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
   const t = adminTranslations.ku;
 
   const fetchStatsData = useCallback(async () => {
     try {
+      setIsLoading(true)
+      setError(null)
       const result = await getDashboardStats()
       if (result.success && result.data) {
         setStats(result.data.stats)
@@ -33,11 +37,12 @@ export default function DashboardPage() {
         setLiveBids(result.data.liveBids)
         setPendingUsers(result.data.pendingUsers)
       } else {
-        console.error("Dashboard stats fetch error:", result.error)
+        setError(result.error || "Failed to fetch stats")
       }
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : "Unknown error"
-      console.error("Dashboard fetch execution error:", message)
+      setError("Execution error")
+    } finally {
+      setIsLoading(false)
     }
   }, [])
 
@@ -63,6 +68,10 @@ export default function DashboardPage() {
     }
   }, [fetchStatsData])
 
+  const Skeleton = ({ className }: { className: string }) => (
+    <div className={`skeleton ${className}`}></div>
+  )
+
   return (
     <div className="space-y-4 animate-in fade-in duration-500">
       <div className="flex items-center justify-between">
@@ -84,45 +93,29 @@ export default function DashboardPage() {
 
       {/* KPI Cards */}
       <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-5 gap-3">
-        <div className="glass-panel p-3 flex flex-col gap-2">
-          <div className="flex items-center justify-between text-slate-400">
-            <span className="font-bold text-[10px] uppercase tracking-tighter">{t.revenue}</span>
-            <DollarSign size={14} className="text-[#FF7A00]" />
+        {[
+          { label: t.revenue, val: `$${new Intl.NumberFormat('en-US').format(stats.revenue)}`, icon: <DollarSign size={14} className="text-[#FF7A00]" /> },
+          { label: t.active_auctions, val: stats.activeAuctions, icon: <Activity size={14} className="text-blue-500" /> },
+          { label: t.pending_checkouts, val: stats.pendingCheckouts, icon: <Package size={14} className="text-amber-500" /> },
+          { label: t.total_users, val: stats.totalUsers, icon: <Users size={14} className="text-purple-500" /> },
+          { label: t.active_support, val: stats.activeSupport, icon: <Activity size={14} className="text-red-500" /> }
+        ].map((card, i) => (
+          <div key={i} className="glass-panel p-3 flex flex-col gap-2 relative overflow-hidden">
+            <div className="flex items-center justify-between text-slate-400">
+              <span className="font-bold text-[10px] uppercase tracking-tighter">{card.label}</span>
+              {card.icon}
+            </div>
+            {isLoading ? <Skeleton className="h-7 w-20" /> : <p className="text-xl font-black">{card.val}</p>}
           </div>
-          <p className="text-xl font-black">${new Intl.NumberFormat('en-US').format(stats.revenue)}</p>
-        </div>
-
-        <div className="glass-panel p-3 flex flex-col gap-2">
-          <div className="flex items-center justify-between text-slate-400">
-            <span className="font-bold text-[10px] uppercase tracking-tighter">{t.active_auctions}</span>
-            <Activity size={14} className="text-blue-500" />
-          </div>
-          <p className="text-xl font-black">{stats.activeAuctions}</p>
-        </div>
-
-        <div className="glass-panel p-3 flex flex-col gap-2">
-          <div className="flex items-center justify-between text-slate-400">
-            <span className="font-bold text-[10px] uppercase tracking-tighter">{t.pending_checkouts}</span>
-            <Package size={14} className="text-amber-500" />
-          </div>
-          <p className="text-xl font-black">{stats.pendingCheckouts}</p>
-        </div>
-
-        <div className="glass-panel p-3 flex flex-col gap-2">
-          <div className="flex items-center justify-between text-slate-400">
-            <span className="font-bold text-[10px] uppercase tracking-tighter">{t.total_users}</span>
-            <Users size={14} className="text-purple-500" />
-          </div>
-          <p className="text-xl font-black">{stats.totalUsers}</p>
-        </div>
-        <div className="glass-panel p-3 flex flex-col gap-2">
-          <div className="flex items-center justify-between text-slate-400">
-            <span className="font-bold text-[10px] uppercase tracking-tighter">{t.active_support}</span>
-            <Activity size={14} className="text-red-500" />
-          </div>
-          <p className="text-xl font-black">{stats.activeSupport}</p>
-        </div>
+        ))}
       </div>
+
+      {error && (
+        <div className="glass-panel !bg-red-500/10 border-red-500/20 p-4 flex items-center justify-between">
+            <span className="text-red-400 text-sm font-bold">⚠️ {error}</span>
+            <button onClick={() => fetchStatsData()} className="text-xs font-black uppercase text-white hover:underline">{t.refresh}</button>
+        </div>
+      )}
 
       {/* Charts and Feeds */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
@@ -130,7 +123,11 @@ export default function DashboardPage() {
         <div className="lg:col-span-2 glass-panel p-4">
           <h3 className="text-sm font-black uppercase tracking-widest mb-4">{t.revenue_chart}</h3>
           <div style={{ width: '100%', height: 300 }}>
-            {chartData.length > 0 ? (
+            {isLoading ? (
+               <div className="w-full h-full space-y-4">
+                  <Skeleton className="h-full w-full rounded-xl"/>
+               </div>
+            ) : chartData.length > 0 ? (
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={chartData}>
                   <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
@@ -144,7 +141,7 @@ export default function DashboardPage() {
                 </LineChart>
               </ResponsiveContainer>
             ) : (
-               <div className="w-full h-full flex items-center justify-center text-slate-500">Loading chart data...</div>
+               <div className="w-full h-full flex items-center justify-center text-slate-500">No revenue data yet.</div>
             )}
           </div>
         </div>
@@ -154,10 +151,12 @@ export default function DashboardPage() {
           <div className="glass-panel p-4 flex flex-col flex-1">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-sm font-black uppercase tracking-widest">{t.market_activity}</h3>
-              <Activity size={14} className="text-[#FF7A00] animate-pulse" />
+              <Activity size={14} className={`text-[#FF7A00] ${isLoading ? '' : 'animate-pulse'}`} />
             </div>
             <div className="space-y-4 overflow-y-auto max-h-[300px] pr-2">
-              {liveBids.length === 0 ? (
+              {isLoading ? (
+                [1,2,3,4].map(i => <Skeleton key={i} className="h-10 w-full" />)
+              ) : liveBids.length === 0 ? (
                 <p className="text-slate-500 text-sm">Waiting for live bids...</p>
               ) : liveBids.map((bid) => (
                 <div key={bid.id} className="flex items-center gap-3 text-sm border-b border-white/5 pb-3 group">
@@ -183,7 +182,9 @@ export default function DashboardPage() {
             </div>
             
             <div className="space-y-4 overflow-y-auto max-h-[200px] pr-2">
-               {pendingUsers.length === 0 ? (
+               {isLoading ? (
+                  [1,2].map(i => <Skeleton key={i} className="h-12 w-full" />)
+               ) : pendingUsers.length === 0 ? (
                    <p className="text-slate-400 text-sm">No users pending approval.</p>
                ) : pendingUsers.map((u) => (
                   <div key={u.id} className="flex items-center gap-4 border-b border-white/5 pb-4 last:border-0 last:pb-0">

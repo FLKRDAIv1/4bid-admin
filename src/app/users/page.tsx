@@ -14,11 +14,13 @@ export default function UsersPage() {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false)
   const [newUser, setNewUser] = useState({ full_name: "", email: "", username: "", phone: "", city: "", pay_limit: 0 })
   const [isSaving, setIsSaving] = useState(false)
+  const [isLoading, setIsLoading] = useState(true)
   
   const t = adminTranslations.ku;
 
   const fetchUsersData = useCallback(async () => {
     try {
+      setIsLoading(true)
       const result = await getUsers()
       if (result.success && result.data) {
         setUsers(result.data as User[])
@@ -26,8 +28,9 @@ export default function UsersPage() {
         console.error("Users fetch error:", result.error)
       }
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : "Unknown error"
-      console.error("Users fetch execution error:", message)
+      console.error("Users fetch execution error")
+    } finally {
+      setIsLoading(false)
     }
   }, [])
 
@@ -102,6 +105,10 @@ export default function UsersPage() {
     (u.full_name || '').toLowerCase().includes(search.toLowerCase())
   );
 
+  const Skeleton = ({ className }: { className: string }) => (
+    <div className={`skeleton ${className}`}></div>
+  )
+
   return (
     <div className="space-y-4 flex flex-col h-full animate-in fade-in duration-500">
       <div className="flex items-center justify-between">
@@ -136,7 +143,11 @@ export default function UsersPage() {
       <div className="flex-1 overflow-hidden">
         {/* Mobile Cards */}
         <div className="lg:hidden space-y-3 overflow-y-auto h-full pb-20">
-          {filteredUsers.map((user) => (
+          {isLoading ? (
+            [1,2,3].map(i => <Skeleton key={i} className="h-40 w-full rounded-xl" />)
+          ) : filteredUsers.length === 0 ? (
+            <div className="text-center py-20 text-slate-500 text-sm">{t.no_users}</div>
+          ) : filteredUsers.map((user) => (
             <div key={user.id} className="glass-panel p-4 space-y-4 border border-white/5">
               <div className="flex justify-between items-start">
                 <div className="flex items-center gap-3">
@@ -202,7 +213,24 @@ export default function UsersPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-white/5">
-                {filteredUsers.map((user) => (
+                {isLoading ? (
+                  [1,2,3,4,5].map(i => (
+                    <tr key={i}>
+                      <td className="px-6 py-4"><Skeleton className="h-10 w-full" /></td>
+                      <td className="px-6 py-4"><Skeleton className="h-10 w-full" /></td>
+                      <td className="px-6 py-4"><Skeleton className="h-10 w-full" /></td>
+                      <td className="px-6 py-4"><Skeleton className="h-10 w-full" /></td>
+                      <td className="px-6 py-4"><Skeleton className="h-10 w-full" /></td>
+                      <td className="px-6 py-4"><Skeleton className="h-10 w-full" /></td>
+                    </tr>
+                  ))
+                ) : filteredUsers.length === 0 ? (
+                  <tr>
+                    <td colSpan={6} className="px-6 py-20 text-center text-slate-500 text-sm">
+                      {t.no_users}
+                    </td>
+                  </tr>
+                ) : filteredUsers.map((user) => (
                   <tr key={user.id} className="hover:bg-white/5 transition-colors group">
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3 justify-end">

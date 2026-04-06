@@ -50,6 +50,7 @@ export default function AuctionsPage() {
   const [proxyBids, setProxyBids] = useState<ProxyBid[]>([])
   const [isBidsLoading, setIsBidsLoading] = useState(false)
   const [isUploading, setIsUploading] = useState(false)
+  const [isLoading, setIsLoading] = useState(true)
   
   const fetchBids = useCallback(async (auctionId: string) => {
     setIsBidsLoading(true)
@@ -94,6 +95,7 @@ export default function AuctionsPage() {
 
   const fetchAuctions = useCallback(async () => {
     try {
+      setIsLoading(true)
       const result = await getAuctions()
       if (result.success) {
         setAuctions(result.data as Auction[] || [])
@@ -101,8 +103,9 @@ export default function AuctionsPage() {
         console.error("Fetch auctions error:", result.error)
       }
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : "Unknown error"
-      console.error("Auctions fetch execution error:", message)
+      console.error("Auctions fetch execution error")
+    } finally {
+      setIsLoading(false)
     }
   }, [])
 
@@ -263,6 +266,10 @@ export default function AuctionsPage() {
     if (url) setVideoUrl(url)
   }
 
+  const Skeleton = ({ className }: { className: string }) => (
+    <div className={`skeleton ${className}`}></div>
+  )
+
   return (
     <div className="space-y-4 animate-in fade-in duration-500">
       <div className="flex items-center justify-between">
@@ -304,7 +311,9 @@ export default function AuctionsPage() {
 
       <div className="flex-1 overflow-hidden">
         <div className="lg:hidden space-y-3 overflow-y-auto h-full pb-20">
-          {auctions.length === 0 ? (
+          {isLoading ? (
+             [1,2,3].map(i => <Skeleton key={i} className="h-32 w-full rounded-xl" />)
+          ) : auctions.length === 0 ? (
             <div className="glass-panel p-8 text-center text-slate-400">No auctions found.</div>
           ) : auctions.filter(a => a.id.includes(search) || (a.products?.title || "").toLowerCase().includes(search.toLowerCase())).map((auction) => (
             <div key={auction.id} className="glass-panel p-3 space-y-3">
@@ -363,7 +372,17 @@ export default function AuctionsPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-white/5">
-                {auctions.length === 0 ? (
+                {isLoading ? (
+                  [1,2,3,4,5].map(i => (
+                    <tr key={i}>
+                      <td className="px-6 py-4"><Skeleton className="h-10 w-full" /></td>
+                      <td className="px-6 py-4"><Skeleton className="h-10 w-full" /></td>
+                      <td className="px-6 py-4"><Skeleton className="h-10 w-full" /></td>
+                      <td className="px-6 py-4"><Skeleton className="h-10 w-full" /></td>
+                      <td className="px-6 py-4"><Skeleton className="h-10 w-full" /></td>
+                    </tr>
+                  ))
+                ) : auctions.length === 0 ? (
                   <tr>
                      <td colSpan={5} className="px-6 py-12 text-center text-slate-400">No auctions found.</td>
                   </tr>
