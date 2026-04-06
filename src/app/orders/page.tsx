@@ -10,6 +10,7 @@ import { Order } from "@/types"
 import { motion } from "framer-motion"
 
 const HUB_ORIGIN = { lat: 36.1912, lng: 44.0091 } // Erbil Central Hub
+export default function OrdersPage() {
   const [orders, setOrders] = useState<Order[]>([])
   const [search, setSearch] = useState("")
   const t = adminTranslations.ku
@@ -86,7 +87,6 @@ const HUB_ORIGIN = { lat: 36.1912, lng: 44.0091 } // Erbil Central Hub
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 flex-1 min-h-0">
-        {/* Orders List */}
         <div className="lg:col-span-2 glass-panel flex flex-col overflow-hidden">
           <div className="p-4 border-b border-white/10 flex gap-4">
             <div className="relative flex-1">
@@ -101,7 +101,6 @@ const HUB_ORIGIN = { lat: 36.1912, lng: 44.0091 } // Erbil Central Hub
             </div>
           </div>
           <div className="flex-1 overflow-auto p-4 lg:p-0">
-            {/* Desktop View: Table */}
             <table className="hidden lg:table w-full text-right border-collapse">
               <thead className="sticky top-0 bg-[#0F1115] z-10 border-b border-white/10">
                 <tr className="text-slate-400 text-[11px] uppercase tracking-widest font-black">
@@ -168,7 +167,6 @@ const HUB_ORIGIN = { lat: 36.1912, lng: 44.0091 } // Erbil Central Hub
               </tbody>
             </table>
 
-            {/* Mobile View: Card List */}
             <div className="lg:hidden space-y-3">
               {orders.length === 0 ? (
                 <div className="p-8 text-center text-slate-400">{t.no_orders}</div>
@@ -218,7 +216,6 @@ const HUB_ORIGIN = { lat: 36.1912, lng: 44.0091 } // Erbil Central Hub
           </div>
         </div>
 
-        {/* Logistics Map View */}
         <div className="glass-panel overflow-hidden flex flex-col relative min-h-[400px]">
            <div className="absolute top-4 left-4 right-4 z-10 glass-panel !bg-black/60 !border-white/5 px-4 py-3 flex items-center justify-between">
              <span className="font-semibold text-sm">Live Delivery Map</span>
@@ -240,7 +237,6 @@ const HUB_ORIGIN = { lat: 36.1912, lng: 44.0091 } // Erbil Central Hub
              ></iframe>
              
               <div className="absolute inset-0 pointer-events-none overflow-hidden">
-                {/* Hub Point Indicator */}
                 <div 
                    className="absolute h-4 w-4 bg-[#FF7A00] rounded-full border-2 border-white/20 shadow-[0_0_15px_rgba(255,122,0,0.6)] z-20"
                    style={{ left: '25.45%', top: '65.44%', transform: 'translate(-50%, -50%)' }}
@@ -255,9 +251,8 @@ const HUB_ORIGIN = { lat: 36.1912, lng: 44.0091 } // Erbil Central Hub
                       const endX = (order.live_lng! - 43.5) / 2 * 100;
                       const endY = 100 - ((order.live_lat! - 35.5) / 2 * 100);
                       
-                      // Calculate Bezier Control Point (curved path)
                       const midX = (startX + endX) / 2;
-                      const midY = (startY + endY) / 2 - 8; // Slight upward curve
+                      const midY = (startY + endY) / 2 - 8; 
                       
                       return (
                         <motion.path 
@@ -284,8 +279,6 @@ const HUB_ORIGIN = { lat: 36.1912, lng: 44.0091 } // Erbil Central Hub
                 </svg>
 
                 {orders.filter(o => o.live_lat && o.live_lng).map((order) => {
-                    // Simple linear interpolation for demonstration within the fixed Iraq-focused bounding box
-                    // Bbox: 43.5,35.5,45.5,37.5 (approx 2 degrees wide/high)
                     const latPercent = 100 - ((order.live_lat! - 35.5) / 2 * 100);
                     const lngPercent = (order.live_lng! - 43.5) / 2 * 100;
                     
